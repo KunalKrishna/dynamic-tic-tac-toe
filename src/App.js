@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 function App() {
@@ -8,6 +8,7 @@ function App() {
   const [isXNext, setIsXNext] = useState(true);
   const [fadingSquare, setFadingSquare] = useState(null);
   const [winner, setWinner] = useState(null);
+  const fadeTimeoutRef = useRef(null);
 
   const calculateWinner = (squares) => {
     const lines = [
@@ -34,8 +35,21 @@ function App() {
     setWinner(winner);
   }, [board]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleClick = (i) => {
-    if (board[i] || winner || fadingSquare !== null) {
+    // Check if square is occupied, game is won, or if the fading square belongs to current player
+    const fadingBelongsToCurrentPlayer = fadingSquare !== null && 
+      (isXNext ? xMoves.includes(fadingSquare) : oMoves.includes(fadingSquare));
+    
+    if (board[i] || winner || fadingBelongsToCurrentPlayer) {
       return;
     }
 
@@ -48,8 +62,8 @@ function App() {
       const oldestMove = currentMoves[0];
       setFadingSquare(oldestMove);
 
-      // Wait for fade animation to complete
-      setTimeout(() => {
+      // Wait for fade animation to complete with cleanup
+      fadeTimeoutRef.current = setTimeout(() => {
         const newBoard = [...board];
         newBoard[oldestMove] = null;
         newBoard[i] = currentPlayer;
@@ -59,6 +73,7 @@ function App() {
         setBoard(newBoard);
         setFadingSquare(null);
         setIsXNext(!isXNext);
+        fadeTimeoutRef.current = null;
       }, 500); // Match CSS animation duration
     } else {
       // Less than 3 moves, just add the new move
@@ -73,6 +88,12 @@ function App() {
   };
 
   const resetGame = () => {
+    // Clear any pending fade timeout
+    if (fadeTimeoutRef.current) {
+      clearTimeout(fadeTimeoutRef.current);
+      fadeTimeoutRef.current = null;
+    }
+    
     setBoard(Array(9).fill(null));
     setXMoves([]);
     setOMoves([]);
