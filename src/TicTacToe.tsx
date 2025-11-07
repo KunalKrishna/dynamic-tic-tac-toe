@@ -23,12 +23,14 @@ const TicTacToe: React.FC = () => {
       const newSquares = prevSquares.map(sq => ({ ...sq, isOldest: false }));
       
       // Mark oldest X move if X has 3 moves
+      // xMoves[0] is the oldest move due to FIFO ordering (first in, first out)
       if (xMoves.length === 3) {
         const oldestXIndex = xMoves[0];
         newSquares[oldestXIndex].isOldest = true;
       }
       
       // Mark oldest O move if O has 3 moves
+      // oMoves[0] is the oldest move due to FIFO ordering (first in, first out)
       if (oMoves.length === 3) {
         const oldestOIndex = oMoves[0];
         newSquares[oldestOIndex].isOldest = true;
@@ -73,10 +75,12 @@ const TicTacToe: React.FC = () => {
     const currentPlayer = isXNext ? 'X' : 'O';
     const currentMoves = isXNext ? [...xMoves] : [...oMoves];
     
-    // If player already has 3 moves, remove the oldest one
+    // If player already has 3 moves, remove the oldest one (FIFO - first in, first out)
     if (currentMoves.length === 3) {
-      const oldestIndex = currentMoves.shift()!;
-      newSquares[oldestIndex] = { value: null, timestamp: 0, isOldest: false };
+      const oldestIndex = currentMoves.shift();
+      if (oldestIndex !== undefined) {
+        newSquares[oldestIndex] = { value: null, timestamp: 0, isOldest: false };
+      }
     }
     
     // Add the new move
